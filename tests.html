@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Pacifica Coast — testler</title>
+<style>body{font:14px/1.5 monospace;background:#0b0e12;color:#dfe5ea;padding:16px}.ok{color:#46dc78}.fail{color:#ff5a50}</style></head>
+<body><h3>Pacifica Coast — mantık testleri</h3><pre id="out">çalışıyor…</pre>
+<script src="src/util.js"></script><script src="src/world.js"></script><script src="src/physics.js"></script><script src="src/traffic.js"></script>
+<script>
+// Saf mantık modülleri (three.js gerekmez). Araç verileri için küçük bir kopya kullanılır.
+const specs = [
+  { id: 'rwd', mass: 1730, L: 2.86, cg: 0.515, track: 1.62, cgH: 0.5, R: 0.345, width: 1.9, len: 4.79, drive: 'rwd', awdFront: 0, torque: [[900, 300], [1800, 560], [2700, 650], [5500, 650], [6300, 590], [7200, 480]], idle: 800, redline: 7200, stall: 2500, gears: [5.0, 3.2, 2.143, 1.72, 1.313, 1.0, 0.823, 0.64], rev: 3.5, final: 3.15, shiftT: 0.14, mu: 1.18, tireB: 11, brakeG: 1.2, bias: 0.62, cdA: 0.42, rollF: 0.6, lock: 0.62, rollGain: 0.005, pitchGain: 0.003, suspHz: 1.9, tank: 59, cyl: 6 },
+  { id: 'fwd', mass: 1590, L: 2.68, cg: 0.59, track: 1.61, cgH: 0.64, R: 0.36, width: 1.865, len: 4.5, drive: 'fwd', awdFront: 1, torque: [[900, 150], [1500, 265], [4500, 265], [5500, 235], [6500, 190]], idle: 750, redline: 6500, stall: 2100, gears: [3.93, 2.32, 1.96, 1.02, 0.78, 0.67, 0.56], rev: 3.5, final: 4.47, shiftT: 0.2, mu: 0.98, tireB: 9, brakeG: 1.02, bias: 0.68, cdA: 0.52, rollF: 0.62, lock: 0.6, rollGain: 0.008, pitchGain: 0.004, suspHz: 1.45, tank: 54, cyl: 4 },
+];
+const res = []; const T = (name, ok, info) => res.push((ok ? '<span class="ok">GEÇTİ</span> ' : '<span class="fail">KALDI</span> ') + name + ' — ' + info);
+const W = PC.World.build(), o = {};
+// 1) yol ağı bağlılığı
+{ const seen = new Set([0]), st = [0]; while (st.length) { const n = W.nodes[st.pop()]; for (const id of n.edges) { const e = W.edges[id], m = e.a === n.id ? e.b : e.a; if (!seen.has(m)) { seen.add(m); st.push(m); } } }
+  T('Yol ağı tek parça', seen.size === W.nodes.length, seen.size + '/' + W.nodes.length + ' kavşak, ' + W.edges.length + ' yol, ' + W.lanes.length + ' şerit'); }
+// 2) her şeridin çıkışı var
+{ let bad = 0; for (const l of W.lanes) { const ex = W.exitsOf(l); if (!ex.length || !ex[0].lane) bad++; } T('Her şeridin çıkışı var', bad === 0, bad + ' sorunlu'); }
+// 3) zemin = yol yüksekliği, eğim sınırı
+{ let md = 0, mg = 0; for (const e of W.edges) for (let i = 1; i < e.pts.length; i++) { const p = e.pts[i]; W.groundAt(p.x, p.z, o); md = Math.max(md, Math.abs(o.y - p.y)); mg = Math.max(mg, Math.abs(p.y - e.pts[i - 1].y) / 4); }
+  T('Zemin sorgusu yol yüzeyini verir', md < 0.3, 'en büyük sapma ' + md.toFixed(3) + ' m'); T('Yol eğimi ≤ %9.5', mg <= 0.095, 'en dik %' + (mg * 100).toFixed(1)); }
+// 4) fizik
+const flat = { SEA: 0, groundAt(x, z, q) { q.y = 0; q.surf = 0; q.edge = null; q.bridge = false; q.node = null; q.lat = 0; return q; } };
+for (const sp of specs) {
+  const v = new PC.Vehicle(sp), inp = { throttle: 1, brake: 0, steer: 0, handbrake: 0 }; let t = 0, t100 = null;
+  for (let i = 0; i < 120 * 20; i++) { v.step(1 / 120, inp, flat); t += 1 / 120; if (t100 === null && v.kmh >= 100) t100 = t; }
+  T(sp.id + ' 0-100', t100 !== null && t100 > 3 && t100 < 11, (t100 || 0).toFixed(1) + ' s');
+  v.reset(0, 0, 0, 0); v.vx = 27.78; v.gear = 4; inp.throttle = 0; inp.brake = 1; let n = 0; while (v.vx > 0.05 && n++ < 3000) v.step(1 / 120, inp, flat);
+  T(sp.id + ' 100-0 fren mesafesi', v.x > 28 && v.x < 50, v.x.toFixed(1) + ' m');
+  inp.brake = 0.4; for (let i = 0; i < 600; i++) v.step(1 / 120, inp, flat);
+  T(sp.id + ' frende tam duruş (titreme yok)', v.vx === 0 && Math.abs(v.vy) < 1e-3 && Math.abs(v.r) < 1e-3, [v.vx, v.vy.toExponential(1), v.r.toExponential(1)].join(' '));
+  v.reset(0, 0, 0, 0); v.vx = 22; v.gear = 3; inp.brake = 0; let ay = 0, fin = true;
+  for (let i = 0; i < 960; i++) { inp.steer = Math.min(1, i / 240); inp.throttle = v.kmh < 80 ? 0.6 : 0.1; v.step(1 / 120, inp, flat); if (i > 480) ay = Math.max(ay, Math.abs(v.ayF)); fin = fin && isFinite(v.x + v.z + v.heading); }
+  T(sp.id + ' viraj tutuşu', fin && ay / 9.81 > 0.7 && ay / 9.81 < 1.35, (ay / 9.81).toFixed(2) + ' g');
+}
+// 5) trafik: şehirde 3 dk
+{ const TR = PC.Traffic; TR.init(W, [{ len: 4.6, width: 1.9 }]); TR.max = 5; const pl = { x: 1.75, z: 140, heading: -1.57, vxw: 0, vzw: 0, speed: 0, width: 1.9, len: 4.6 }; // oyuncu şeridinde duruyor
+  let red = 0, coll = 0, stuck = 0, maxV = 0;
+  for (let i = 0; i < 60 * 180; i++) { TR.update(1 / 60, pl); for (const c of TR.cars) { maxV = Math.max(maxV, c.v); if (c.stuckT > 40) stuck++;
+    for (const q of TR.cars) if (q !== c && Math.hypot(q.x - c.x, q.z - c.z) < 2.0) coll++;
+    if (!c.piece.conn && c.lane.to.signal && c.lane.to.edges.length >= 3) { const d = c.lane.len - c.s; if (d < 1.5 && d > 0 && c.v > 3 && PC.Signals.state(c.lane.to, c.lane.endAxis) === 2 && c.exit.turn !== 1) red++; } } }
+  T('Trafik kırmızıda durur', red === 0, red + ' ihlal'); T('Trafik araçları çarpışmaz', coll === 0, coll + ' temas'); T('Trafik kilitlenmez (duran oyuncunun etrafından dolaşır)', stuck === 0, 'en yüksek hız ' + (maxV * 3.6).toFixed(0) + ' km/h'); T('En çok 5 hareketli araç', TR.cars.length <= 5, TR.cars.length + ' araç'); }
+document.getElementById('out').innerHTML = res.join('\n'); window.TESTS = res;
+</script></body></html>

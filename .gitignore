@@ -1,0 +1,22 @@
+# derleme çıktıları
+dist/
+apk/out/
+apk/assets/
+apk/assets-lite/
+# imza anahtarları ve sırlar
+*.jks
+*.keystore
+*.idsig
+.env
+# geçici / geliştirme
+_shots/
+_dl/
+_*.php
+kaynak2/
+kaynak-modeller/
+*.tmp
+# lisans gereği depoya konmayan modeller (THIRD-PARTY.md)
+assets/cars/wagoneer/
+assets/cars/g8/
+assets/cars/veloster/
+assets/cars/elroq/

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#05070a">
+<title>Pacifica Coast Driver</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="boot"><video muted playsinline preload="auto"></video><div class="shade"></div>
+  <div id="bootIn"><div class="logo"><b>PACIFICA</b><em>COAST DRIVER</em></div><div id="bootStat">Başlatılıyor…</div><div id="bootBar"><i></i></div><div id="bootTip"></div></div></div>
+<!--ASSETS-->
+<script>(function(){var v=document.querySelector('#boot video');if(!v)return;var d=window.PC_VIDEO_DIR!==undefined?window.PC_VIDEO_DIR:window.PC_DIST?'video/':'assets/video/';v.muted=true;v.loop=true;v.playsInline=true;v.src=d+'load.mp4';var p=v.play();if(p&&p.catch)p.catch(function(){});})();</script>
+<script src="lib/three.min.js"></script>
+<script src="lib/gltf-loader.js"></script>
+<script src="src/assets.js"></script>
+<script src="src/util.js"></script>
+<script src="src/world.js"></script>
+<script src="src/physics.js"></script>
+<script src="src/traffic.js"></script>
+<script src="src/cars.js"></script>
+<script src="src/cars2.js"></script>
+<script src="src/cockpit.js"></script>
+<script src="src/glbcar.js"></script>
+<script src="src/extcars.js"></script>
+<script src="src/props.js"></script>
+<script src="src/scenery.js"></script>
+<script src="src/post.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/fx.js"></script>
+<script src="src/ui.js"></script>
+<script src="src/menu.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
