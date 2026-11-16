@@ -5,7 +5,7 @@
   const PC = window.PC, U = PC.U;
   // ---- ayarlar (varsayılanlar) ----
   const DEF = {
-    car: 0, color: 0, hour: 17.4, traffic: 5, parked: 15, aggr: 0.6,
+    car: 0, color: 0, hour: 17.4, traffic: 3, parked: 10, aggr: 0.6,
     // oynanış
     steerMode: 'slide', sens: 1, esc: 2, tcs: 1, abs: 1, assist: 1, manual: 0, drive: 'real', units: 'kmh', camDef: 0, camShake: 1, autoLights: 1, vibrate: 1,
     fov: 58, fovOut: 52, seatY: -0.04, seatX: 0.1, hudScale: 1, hudOpacity: 0.92, lefty: 0, showMap: 1, showMeters: 0, fpsShow: 0, mirror: 1,
@@ -19,7 +19,8 @@
   const ST = (PC.Settings = Object.assign({}, DEF));
   const KEY = 'pacifica-coast';
   try { Object.assign(ST, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* yok say */ }
-  if (!ST.v4) { ST.v4 = 1; ST.parked = 15; ST.preset = 'med'; ST.compact = 0; }
+  if (!ST.v4) { ST.v4 = 1; ST.preset = 'med'; ST.compact = 0; }
+  if (!ST.v5) { ST.v5 = 1; ST.traffic = 3; ST.parked = 10; } // yeni varsayılan trafik (bir kez uygulanır)
   const save = (PC.saveSettings = () => { try { localStorage.setItem(KEY, JSON.stringify(ST)); } catch (e) { /* yok say */ } });
   PC.DEFAULTS = DEF;
 

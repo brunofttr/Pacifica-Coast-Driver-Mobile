@@ -10,7 +10,7 @@ Telefon için yapılmış, açık dünyalı, gerçekçi fizikli sürüş simüla
 - **120 Hz sabit adımlı araç fiziği:** 4 tekerlekte yük aktarımı, Pacejka benzeri lastik modeli, sürtünme elipsi, tork konvertörü, otomatik / manuel vites, ABS / TCS / ESC, 4x4 düşük vites.
 - **Açık dünya:** düzensiz şehir planı, ana cadde, asma köprü, otoyol, sahil, tepe yolu, villa ve otomatik garaj kapısı, 4 ışınlanma noktası, varış görevi.
 - **Yapay zekâ trafiği:** şerit takibi, şerit değiştirme, sinyal ve kırmızı ışık uyumu, kavşak rezervasyonu, kornaya yarışma.
-- **15 sürülebilir araç:** gerçek araç modelleri ("Araçlar") ve bilim kurgu konsept modeller; her birinde canlı kokpit, çalışan direksiyon, dönen tekerlekler, dikiz aynası, far / stop / sinyal / geri vites ışıkları.
+- **15 sürülebilir araç:** gerçek araç modelleri ("Araçlar", birincil kategori), "Spor ve süper" ve "Bilim kurgu" konsept modeller; her birinde canlı kokpit, çalışan direksiyon, dönen tekerlekler, dikiz aynası, far / stop / sinyal / geri vites ışıkları.
 - **Grafik:** HDR + bloom + ACES, SSAO, canlı yansımalar, gölgeler, fiziksel cam, vernikli boya, deniz kıyı köpüğü, hacimli ağaçlar, lastik izi ve duman.
 - **Ana menü ve ayarlar:** videolu ana menü, ayrıntılı grafik / oynanış / arayüz / ses ayarları, otomatik kalite ayarı, FPS sınırı, dinamik çözünürlük.
 - **Güncelleme bildirimi:** oyun, bu depodaki `version.json` dosyasını okur; yeni sürüm varsa ana menüde bildirir.

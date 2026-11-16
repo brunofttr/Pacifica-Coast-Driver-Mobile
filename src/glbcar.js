@@ -3,12 +3,12 @@
   'use strict';
   const PC = window.PC, T = THREE;
   const spec = {
-    id: 'aurora', name: 'Aurora GT Concept', cls: 'Konsept süper otomobil · RWD · 720 hp', colors: [null, 0xe9e6df, 0x2b2d31, 0x123a7a, 0x0f5a3c, 0xd9a400],
+    id: 'aurora', cat: 'Spor ve süper', name: 'Aurora GT Concept', cls: 'Konsept süper otomobil · RWD · 720 hp', colors: [null, 0xe9e6df, 0x2b2d31, 0x123a7a, 0x0f5a3c, 0xd9a400],
     glb: 'models/CarConcept.glb',
     mass: 1480, L: 2.8, cg: 0.43, track: 1.96, cgH: 0.44, R: 0.384, width: 2.02, len: 4.56, drive: 'rwd', awdFront: 0,
     torque: [[1000, 380], [2500, 620], [3500, 720], [6500, 730], [7800, 650], [8500, 560]], idle: 900, redline: 8500, stall: 3000, powerKw: 530,
     gears: [3.4, 2.2, 1.6, 1.25, 1.02, 0.86, 0.72], rev: 3.2, final: 3.9, shiftT: 0.09,
-    mu: 1.3, tireB: 12.5, brakeG: 1.32, bias: 0.6, cdA: 0.4, cl: 0.9, rollF: 0.5, lock: 0.6, rollGain: 0.0038, pitchGain: 0.0022, suspHz: 2.3, tank: 70, cyl: 8, vmaxDial: 360, dash: 'sport', seat: { y: 0.3 },
+    mu: 1.3, tireB: 12.5, brakeG: 1.32, bias: 0.6, cdA: 0.4, cl: 0.9, rollF: 0.5, lock: 0.6, rollGain: 0.0038, pitchGain: 0.0022, suspHz: 2.3, tank: 70, cyl: 8, vmaxDial: 360, dash: 'sport', seat: { y: 0.3 }, steerOff: 0.25,
   };
   PC.CarSpecs.unshift(spec);
   PC.Credits = [
@@ -68,10 +68,10 @@
         if (car.mSig) car.mSig.emissiveIntensity = 0;
       };
       const sn = scene.getObjectByName('InteriorSteeringCylinder');
-      if (sn) { car.steerNode = sn; const base = sn.quaternion.clone(); car.setSteer = (a) => { sn.quaternion.copy(base).multiply(_q.setFromAxisAngle(YAX, a)); }; }
+      if (sn) { car.steerNode = sn; const base = sn.quaternion.clone(); car.setSteer = (a) => { sn.quaternion.copy(base).multiply(_q.setFromAxisAngle(YAX, -a + (sp.steerOff || 0))); }; }
       // kokpit yerleşimi (araç gövde koordinatları: x ileri, y yukarı, z sağ)
       const X = (ly) => -ly + shiftX;
-      car.ck = { cluster: [X(-1.36), 0.862, 0], clusterScale: 0.8, clusterTilt: -0.3, mirror: [X(-1.0), 1.085, 0], mirrorScale: 0.72, mirrorCam: [X(1.6), 1.0, 0], eye: new T.Vector3(X(-0.6), 0.985, 0) };
+      car.ck = { cluster: [X(-1.36), 0.862, 0], clusterScale: 0.8, clusterTilt: -0.3, mirror: [X(-0.84), 0.975, 0.17], mirrorScale: 0.5, mirrorCam: [X(1.6), 1.0, 0], eye: new T.Vector3(X(-0.6), 0.985, 0) };
       car.hoodCam = new T.Vector3(X(-1.75), 0.98, 0);
     }
     for (const m of car.paints) m.color.setHex(color === null || color === undefined ? m.userData.c0 : color);

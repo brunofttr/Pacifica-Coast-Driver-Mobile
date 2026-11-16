@@ -3,7 +3,7 @@
   'use strict';
   const PC = window.PC, ST = PC.Settings, UI = PC.UI, U = PC.U;
   const M = (PC.Menu = { ctx: 'main', open: null });
-  PC.VERSION = { name: '1.1.0', build: 11, repo: 'brunofttr/Pacifica-Coast-Driver-Mobile' };
+  PC.VERSION = { name: '1.1.1', build: 12, repo: 'brunofttr/Pacifica-Coast-Driver-Mobile' };
   const RAW = 'https://raw.githubusercontent.com/' + PC.VERSION.repo + '/main/version.json';
   const VD = window.PC_VIDEO_DIR !== undefined ? window.PC_VIDEO_DIR : window.PC_DIST ? 'video/' : 'assets/video/';
   const $ = (id) => document.getElementById(id);
@@ -198,6 +198,12 @@
   PC.SCHEMA = SCHEMA;
   const DRIVE = { arcade: { esc: 2, tcs: 1, abs: 1, assist: 1, grip: 1.12 }, real: { esc: 2, tcs: 1, abs: 1, assist: 1, grip: 1 }, sim: { esc: 0, tcs: 0, abs: 1, assist: 0, grip: 1 } };
 
+  M.resetTab = function (id) {
+    const sec = SCHEMA.find((s) => s.id === id), D = PC.DEFAULTS;
+    for (const it of sec.items) if (it.k && it.k !== 'preset') M.set(it.k, D[it.k]);
+    if (id === 'gfx') M.set('preset', D.preset); else if (id === 'play') M.set('drive', 'real');
+    UI.toast(sec.name + ' ayarları sıfırlandı');
+  };
   M.set = function (k, v, silent) {
     ST[k] = v;
     if (k === 'preset' && PRESETS[v]) { Object.assign(ST, PRESETS[v]); for (const g of GKEYS) fire('setting', g, ST[g]); }
@@ -255,7 +261,8 @@
       M.setTab = id; sh.tb.querySelectorAll('.btn').forEach((b) => b.classList.toggle('on', b.dataset.id === id));
       sh.body.innerHTML = ''; curItems = []; const sec = SCHEMA.find((s) => s.id === id);
       let grid = null; for (const it of sec.items) { if (it.h) { sh.body.appendChild(el('h2', '', it.h)); grid = el('div', 'grid2'); sh.body.appendChild(grid); continue; } if (!grid) { grid = el('div', 'grid2'); sh.body.appendChild(grid); } curItems.push(it); grid.appendChild(control(it)); }
-      if (id === 'gfx') { const a = el('div', 'action'); a.style.marginTop = '14px'; const r = el('button', 'btn red', 'Grafik ayarlarını varsayılana döndür'); r.addEventListener('click', () => { M.set('preset', 'med'); show('gfx'); }); a.appendChild(r); sh.body.appendChild(a); }
+      const a = el('div', 'action'); a.style.marginTop = '16px'; const r = el('button', 'btn red', '↺ Bu sekmeyi varsayılana sıfırla (' + sec.name + ')');
+      r.addEventListener('click', () => dialog('<b>' + sec.name + '</b> sekmesindeki tüm ayarlar varsayılana dönecek. Emin misin?', [['Sıfırla', () => { M.resetTab(id); show(id); }, 'red'], ['Vazgeç', null]])); a.appendChild(r); sh.body.appendChild(a);
       sh.body.scrollTop = 0;
     };
     for (const s of SCHEMA) { const b = el('button', 'btn', s.name); b.dataset.id = s.id; b.addEventListener('click', () => show(s.id)); sh.tb.appendChild(b); }
@@ -269,6 +276,7 @@
     const draw = () => {
       sh.body.innerHTML = '';
       const specs = PC.CarSpecs, cats = []; for (const c of specs) if (!c.hidden && cats.indexOf(c.cat || 'Diğer') < 0) cats.push(c.cat || 'Diğer');
+      cats.sort((a, b) => (a === 'Araçlar' ? -1 : b === 'Araçlar' ? 1 : 0)); // birincil kategori: Araçlar
       const cur = specs[ST.car]; if (!M.cat || cats.indexOf(M.cat) < 0) M.cat = cur && !cur.hidden ? cur.cat || 'Diğer' : cats[0];
       sh.tb.innerHTML = ''; for (const c of cats) { const b = el('button', 'btn' + (c === M.cat ? ' on' : ''), c + ' (' + specs.filter((x) => !x.hidden && (x.cat || 'Diğer') === c).length + ')'); b.addEventListener('click', () => { M.cat = c; draw(); }); sh.tb.appendChild(b); }
       const g = el('div', 'garage'), list = el('div', 'cars');
@@ -285,10 +293,17 @@
         info.appendChild(el('h2', '', 'Başlangıç noktası')); const sg = el('div', 'seg'); const opts = [[-1, 'Şehir (varsayılan)']].concat((PC.World.teleports || []).map((t, i) => [i, t.name]));
         for (const [v, n] of opts) { const b = el('button', (ST.startAt === undefined ? -1 : ST.startAt) === v ? 'on' : '', n); b.addEventListener('click', () => { ST.startAt = v; PC.saveSettings(); draw(); }); sg.appendChild(b); } info.appendChild(sg);
       }
+      const use = el('button', 'btn pri', pause ? 'ARACI KULLAN VE DEVAM ET' : 'ARACI KULLAN'); use.style.cssText = 'width:100%;margin-top:12px'; use.addEventListener('click', async () => { M.busy(true, 'Araç hazırlanıyor…'); try { await PC.Game.carReady(); } catch (e) { /* */ } M.busy(false); M.closePanel(); if (pause) M.resume(); }); info.appendChild(use);
       g.appendChild(list); g.appendChild(info); sh.body.appendChild(g);
     };
-    const applyCar = async () => { M.busy(true, 'Araç yükleniyor…'); try { await fire('car'); } finally { M.busy(false); } };
-    const pick = (i) => { ST.car = i; ST.color = 0; ST.bias = 0; PC.saveSettings(); draw(); applyCar(); };
+    const applyCar = async () => {
+      M.busy(true, 'Araç yükleniyor…'); PC.Game.carError = null;
+      try { await fire('car'); } catch (e) { PC.Game.carError = String((e && e.message) || e); } finally { M.busy(false); }
+      if (PC.Game.carError) { dialog('Araç yüklenemedi: <small>' + PC.Game.carError + '</small>', [['Tamam', null]]); }
+      const cur = PC.Game.car && PC.CarSpecs.indexOf(PC.Game.car.spec); if (cur >= 0 && cur !== ST.car) { ST.car = cur; PC.saveSettings(); }
+      draw(); if (!PC.Game.carError) UI.toast('Seçildi: ' + PC.CarSpecs[ST.car].name);
+    };
+    const pick = (i) => { if (M.busyCar) return; M.busyCar = true; ST.car = i; ST.color = 0; ST.bias = 0; PC.saveSettings(); draw(); applyCar().finally(() => { M.busyCar = false; }); };
     document.body.appendChild(sh.p); draw(); M.refresh = draw;
     if (pause) $('pauseM').classList.add('hidden');
   }

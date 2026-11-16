@@ -153,11 +153,11 @@
     const s = { hl: [], br: [], tl: [], sf: { L: [], R: [] }, sr: { L: [], R: [] }, rv: [] };
     for (const sd of [-1, 1]) {
       const zh = sd * hw * 0.62, zt = sd * hw * 0.64;
-      if (o.head) s.hl.push(mk(0xfff2d8, true, yH, zh, 0.34));
-      s.br.push(mk(0xff1208, false, yT, zt, 0.34)); s.tl.push(mk(0xff2a10, false, yT, zt, 0.2));
-      (sd < 0 ? s.sf.L : s.sf.R).push(mk(0xff8a10, true, yH + 0.09, sd * hw * 0.8, 0.22));
-      (sd < 0 ? s.sr.L : s.sr.R).push(mk(0xff8a10, false, yT + 0.1, sd * hw * 0.8, 0.22));
-      s.rv.push(mk(0xffffff, false, yT - 0.09, sd * hw * 0.38, 0.2));
+      if (o.head) s.hl.push(mk(0xfff2d8, true, yH, zh, 0.26));
+      s.br.push(mk(0xff1208, false, yT, zt, 0.26)); s.tl.push(mk(0xff2a10, false, yT, zt, 0.15));
+      (sd < 0 ? s.sf.L : s.sf.R).push(mk(0xff8a10, true, yH + 0.09, sd * hw * 0.8, 0.17));
+      (sd < 0 ? s.sr.L : s.sr.R).push(mk(0xff8a10, false, yT + 0.1, sd * hw * 0.8, 0.17));
+      s.rv.push(mk(0xffffff, false, yT - 0.09, sd * hw * 0.38, 0.15));
     }
     const all = [].concat(s.hl, s.br, s.tl, s.sf.L, s.sf.R, s.sr.L, s.sr.R, s.rv);
     const fn = function (head, brake, il, ir, rev) {

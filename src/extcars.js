@@ -13,16 +13,16 @@
   const lux = { mass: 2050, mu: 1.05, tireB: 9.5, suspHz: 1.45, rollGain: 0.008, pitchGain: 0.0044, cdA: 0.48, vmaxDial: 280 };
   const D = (id, name, cls, extra, ext) => Object.assign({}, base, extra || {}, { id, name, cls, ext: Object.assign({ dir: 'cars/' + id }, ext || {}) });
   const EXT = [
-    D('c011', 'Nova GT-E', 'Konsept coupe · AWD · iç mekânlı', null, { interior: true, steer: 'SW_Empty' }),
-    D('c003', 'Meridian Lux', 'Konsept limuzin · AWD · iç mekânlı', lux, { interior: true, tire: /^Material\.(002|003|011|028)$/ }),
-    D('c005', 'Azure S', 'Konsept hatchback · AWD · iç mekânlı', null, { interior: true, tire: /wheel_nitto/ }),
-    D('c007', 'Regent Grand', 'Konsept GT · RWD · iç mekânlı', lux, { interior: true, tire: /rubber_tires|tire_protector/, visSteer: 0.4 }),
-    D('c006', 'Titan GT', 'Konsept grand tourer · AWD · iç mekânlı', lux, { interior: true, tire: /wheel_nitto/ }),
-    D('c033', 'Arrow LM', 'Konsept prototip · RWD', hot, { visSteer: 0.25, splitSkip: /body_color|chrome/ }),
-    D('c037', 'Noir Coupe', 'Konsept coupe · RWD', hot, { flip: true }),
-    D('c038', 'Glacier One', 'Konsept şehir coupe · AWD', { mass: 1400 }),
-    D('c039', 'Crimson RS', 'Konsept roadster · RWD', hot),
-    D('c040', 'Onyx 4', 'Konsept sedan · AWD', null),
+    D('c011', 'Nova GT-E', 'Konsept coupe · AWD · iç mekânlı', { cat: 'Bilim kurgu' }, { interior: true, steer: 'SW_Empty' }),
+    D('c003', 'Meridian Lux', 'Konsept limuzin · AWD · iç mekânlı', Object.assign({ cat: 'Bilim kurgu' }, lux), { interior: true, tire: /^Material\.(002|003|011|028)$/ }),
+    D('c005', 'Azure S', 'Konsept hatchback · AWD · iç mekânlı', { cat: 'Bilim kurgu' }, { interior: true, tire: /wheel_nitto/ }),
+    D('c007', 'Regent Grand', 'Konsept GT · RWD · iç mekânlı', Object.assign({ cat: 'Bilim kurgu' }, lux), { interior: true, tire: /rubber_tires|tire_protector/, visSteer: 0.4 }),
+    D('c006', 'Titan GT', 'Konsept grand tourer · AWD · iç mekânlı', Object.assign({ cat: 'Bilim kurgu' }, lux), { interior: true, tire: /wheel_nitto/ }),
+    D('c033', 'Arrow LM', 'Konsept prototip · RWD', Object.assign({ cat: 'Spor ve süper' }, hot), { visSteer: 0.25, splitSkip: /body_color|chrome/ }),
+    D('c037', 'Noir Coupe', 'Konsept coupe · RWD', Object.assign({ cat: 'Spor ve süper' }, hot), { flip: true }),
+    D('c038', 'Glacier One', 'Konsept şehir coupe · AWD', { mass: 1400, cat: 'Bilim kurgu' }),
+    D('c039', 'Crimson RS', 'Konsept roadster · RWD', Object.assign({ cat: 'Spor ve süper' }, hot)),
+    D('c040', 'Onyx 4', 'Konsept sedan · AWD', { cat: 'Spor ve süper' }),
     // --- gerçek araç modelleri (Sketchfab, ücretsiz standart lisans) ---
     D('wagoneer', 'Jeep Grand Wagoneer 1991', 'SUV · 4x4 · 5.9 V8 · 144 hp', { cat: 'Araçlar', colors: [null, 0x5a1a1a, 0x1a2a4a, 0xd8d2c4, 0x1c1c1c], mass: 2050, drive: 'awd', awdFront: 0.5, lowRange: 2.6, cg: 0.5, cgH: 0.72, torque: [[800, 330], [1600, 380], [2800, 360], [3600, 290], [4400, 200]], idle: 650, redline: 4600, stall: 1900, powerKw: 107, gears: [2.74, 1.55, 1.0], rev: 2.2, final: 3.9, shiftT: 0.3, mu: 0.95, tireB: 8.5, brakeG: 0.9, cdA: 1.15, cl: 0, suspHz: 1.3, rollGain: 0.011, pitchGain: 0.006, tank: 76, cyl: 8, vmaxDial: 160, dash: 'classic' },
       { interior: true, rig: true, anim: false, gauge: { mph: 1 } }),
@@ -342,6 +342,11 @@
       car.keepHud = !!E.keepHud;
       car.ck = { kit: !E.interior, cabin: REAL ? 1.6 : 7, noCluster: !!(E.rig || E.noCluster), eye: new T.Vector3().fromArray(eye), cluster: E.cluster || (swp ? [swp.x + 0.2 + (E.clDX || 0), swp.y + 0.2 + (E.clDY || 0), swp.z] : [eye[0] + 0.66, eye[1] - 0.17, eye[2]]), clusterScale: E.clusterScale || (swp ? 0.58 : 0.8), clusterTilt: -0.22,
         mirror: E.mirror || fitMir || [eye[0] + 0.5, Math.min(roof - 0.1, eye[1] + 0.12), 0], mirrorScale: 0.75, mirrorCam: [xr2 - 0.6, roof - 0.1, 0], width: sp.width };
+      if (E.interior && !REAL && !E.keepModelCluster) { // modelin kendi (sabit) gösterge ekranı canlı göstergemizin altında ikinci bir panel gibi duruyordu: ışıklı ekran parçaları gizlenir, canlı gösterge onun yerine oturur
+        const cp = new T.Vector3().fromArray(car.ck.cluster), hit = [], ub = new T.Box3();
+        for (const o of meshes) { if (!o.visible || o.userData.wheel) continue; const m = o.material; if (!(m.emissiveMap || (m.emissive && m.emissive.getHex() > 0))) continue; box(o, _b); _b.getCenter(_c); _b.getSize(_s); if (Math.max(_s.x, _s.y, _s.z) > 0.9 || _c.distanceTo(cp) > 0.7 || _c.y < cp.y - 0.3) continue; hit.push(o); ub.union(_b); }
+        if (hit.length >= 3) { ub.getCenter(_c); car.ck.cluster = [_c.x - 0.09, _c.y + 0.01, _c.z]; car.diag.clusterHidden = hit.length; } // canlı gösterge, modelin ekranının hemen önüne (göze doğru) oturur ve onu örter
+      }
       if (car._mirrorPos) { car.ck.mirror = [car._mirrorPos.x - 0.07, car._mirrorPos.y - 0.02, car._mirrorPos.z]; car.ck.mirrorScale = E.mirrorScale || 0.55; }
       car.hoodCam = new T.Vector3(xr2 + sp.L * 0.78, Math.min(roof, 1.2) * 0.9, 0);
     }

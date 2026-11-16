@@ -5,6 +5,7 @@
   const G = (PC.Game = {});
   const H = 1 / 120, CAMS = ['Takip kamerası', 'Kokpit', 'Kaput', 'Serbest kamera'];
   let renderer, scene, camera, veh, car, ck, cubeRT, cubeCam, cubeSize = 0, pr = 1, maxPr = 1, minPr = 0.6, frameN = 0, face = 0, acc = 0, lastDraw = 0, raf = 0, upT = 0;
+  let graceT = 0; // oyuna girişteki ilk saniyelerde dinamik çözünürlük ve otomatik ayar çalışmaz (yükleme takılmaları FPS'i yanlış gösterir)
   let camH = 0, orbit = 0.6, waterT = 0, histT = 0, blinkT = 0, fpsT = 0, fpsN = 0, lowT = 0, lastBlink = false, firstStart = true;
   const ENVF = [0, 4, 2, 1], MIRF = [0, 4, 3, 2], MIRS = [[2, 2], [384, 112], [576, 168], [768, 224]], CUBE = [64, 128, 256, 256], SHAD = [0, 1024, 2048, 4096];
   const nextFrame = () => new Promise((r) => setTimeout(r, 20));
@@ -24,12 +25,13 @@
     TSPECS = PC.CarSpecs.filter((s) => s.body);
     for (const s of PC.CarSpecs) { if (s.body) s.hidden = true; else s.cat = s.cat || 'Bilim kurgu'; }
     await filterCars();
+    if (PC.Menu.first) { const i0 = PC.CarSpecs.findIndex((s) => !s.hidden && s.cat === 'Araçlar'); if (i0 >= 0) ST.car = i0; } // ilk açılış: birincil kategori "Araçlar"
     if (!PC.CarSpecs[ST.car] || PC.CarSpecs[ST.car].hidden) ST.car = PC.CarSpecs.findIndex((s) => !s.hidden);
     W.build();
     B.bootProgress(0.18, 'Grafik motoru başlatılıyor…'); await nextFrame();
     renderer = new T.WebGLRenderer({ canvas: $('game'), antialias: false, powerPreference: 'high-performance', stencil: false });
     renderer.outputColorSpace = T.SRGBColorSpace; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
-    renderer.info.autoReset = false; renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
+    renderer.info.autoReset = false; renderer.localClippingEnabled = true; renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
     PC.Post.samples = ST.gMsaa; PC.Post.init(renderer);
     scene = new T.Scene(); camera = new T.PerspectiveCamera(52, 2, 0.3, 6000);
     G.renderer = renderer; G.scene = scene; G.camera = camera;
@@ -66,13 +68,14 @@
   // ---- oyun durumu: ana menüde ve duraklatmada HİÇBİR şey çizilmez ----
   G.start = async function () {
     if (!G.ready) return;
-    if (ST.car !== (PC.CarSpecs.indexOf(car.spec))) await setCar(false);
+    if (ST.car !== (PC.CarSpecs.indexOf(car.spec))) await setCar(false); else await carChain;
     if (firstStart) { firstStart = false; state.cam = ST.camDef || 0; if (ST.startAt !== undefined && ST.startAt >= 0 && W.teleports[ST.startAt]) UI.on.teleport(ST.startAt); }
     PC.Menu.ctx = 'play'; AU.init(); if (AU.ctx && AU.ctx.state === 'suspended') AU.ctx.resume();
-    G.resume();
+    G.resume(); graceT = 10;
   };
+  G.carReady = () => carChain;
   G.resume = function () {
-    G.mode = 'play'; UI.menuOpen = false; PC.Menu.ctx = 'play'; $('hud').classList.remove('hidden'); $('rotate').classList.add('need'); lastDraw = 0; acc = 0;
+    graceT = Math.max(graceT, 3); G.mode = 'play'; UI.menuOpen = false; PC.Menu.ctx = 'play'; $('hud').classList.remove('hidden'); $('rotate').classList.add('need'); lastDraw = 0; acc = 0;
     cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
     const el = document.documentElement;
     try { const p = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : null; if (p && p.then) p.then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {}); } catch (e) { /* */ }
@@ -163,9 +166,12 @@
     scene.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap']) { const t = m[k]; if (t && !seen.has(t) && t.anisotropy !== mx && !t.isRenderTargetTexture) { seen.add(t); t.anisotropy = mx; t.needsUpdate = true; } } });
   }
   function envAssign() { const t = ST.gRefl ? cubeRT.texture : null; for (const m of car.envMats) { m.envMap = t; m.needsUpdate = true; } }
-  function setCar(first) {
+  // araç değişimleri sıraya girer: aynı anda iki yükleme / kurulum birbirini bozmaz
+  let carChain = Promise.resolve();
+  function setCar(first) { const p = carChain.then(() => setCarNow(first)); carChain = p.catch(() => {}); return p; }
+  function setCarNow(first) {
     const spec = PC.CarSpecs[ST.car];
-    if (spec.ext && !spec._gltf) return PC.loadExtCar(spec).then(() => setCar(first)).catch((e) => { console.warn(e); UI.toast('Model dosyası bulunamadı (data klasörü HTML ile aynı yerde olmalı)'); ST.car = PC.CarSpecs.findIndex((s) => !s.ext && !s.hidden); if (UI.refreshMenu) UI.refreshMenu(); return setCar(first); });
+    if (spec.ext && !spec._gltf) return PC.loadExtCar(spec).then(() => setCarNow(first)).catch((e) => { console.warn(e); G.carError = String((e && e.message) || e); UI.toast('Araç yüklenemedi: ' + spec.name); ST.car = PC.CarSpecs.findIndex((s) => !s.ext && !s.hidden); return setCarNow(first); });
     const old = veh;
     if (car) { scene.remove(car.group); ck.mirrorRT.dispose(); if (ck.group.parent) ck.group.parent.remove(ck.group); if (ck.mirrorCam.parent) ck.mirrorCam.parent.remove(ck.mirrorCam); if (car.mesh) car.mesh.geometry.dispose(); if (car.spec.ext && car.spec !== spec) PC.disposeExtCar(car.spec); }
     car = spec.ext ? PC.buildExtCar(spec, spec.colors[ST.color]) : spec.glb ? PC.buildGlbCar(spec, spec.colors[ST.color]) : PC.buildCar(spec, { player: true, color: spec.colors[ST.color] });
@@ -268,7 +274,15 @@
   }
 
   // ---------- kamera ----------
+  // içi boş (kit kokpitli) modellerde kokpit kamerasında göz hizasının üstündeki gövde parçaları (tavan çerçevesi, kanatçıklar) kesilir
+  const clipPlane = new T.Plane(new T.Vector3(0, -1, 0), 0), clipArr = [clipPlane];
+  function kitClip(on, eyeY) {
+    if (!car.ck || !car.ck.kit) on = false;
+    if (on) clipPlane.constant = eyeY - 0.03;
+    if (on !== !!car._clip) { car._clip = on; for (const m of car.envMats) if (m !== car.glass) { m.clippingPlanes = on ? clipArr : null; m.needsUpdate = true; } }
+  }
   function updateCamera(dt) {
+    if (state.cam !== 1 || UI.menuOpen) kitClip(false, 0);
     if (G.dbg) { camera.position.set(G.dbg[0], G.dbg[1], G.dbg[2]); camera.lookAt(G.dbg[3], G.dbg[4], G.dbg[5]); return; }
     const sp = veh.spec, cam = UI.menuOpen ? 3 : state.cam;
     let near = 0.3, fov = 52;
@@ -286,7 +300,7 @@
       car.body.updateWorldMatrix(true, false);
       if (cam === 1) { _v.copy(ck.eye); _v.x -= U.clamp(veh.axF, -8, 8) * 0.0035; _v.z -= U.clamp(veh.ayF, -8, 8) * 0.003; near = 0.1; fov = ST.fov || 58; _v.y += ST.seatY || 0; _v.x -= ST.seatX || 0; }
       else { _v.copy(car.hoodCam); fov = 52; near = 0.15; }
-      camera.position.copy(_v.applyMatrix4(car.body.matrixWorld));
+      camera.position.copy(_v.applyMatrix4(car.body.matrixWorld)); kitClip(cam === 1, camera.position.y);
       car.body.getWorldQuaternion(_q); _q.multiply(QFIX);
       _e.set(-UI.lookPitch * 0.8 - (cam === 1 ? 0.1 : 0.04), -UI.lookYaw, 0, 'YXZ'); _q.multiply(_q2.setFromEuler(_e));
       camera.quaternion.copy(_q);
@@ -347,14 +361,15 @@
     const dt = Math.min(0.05, rdt);
     frameN++;
     // FPS + dinamik çözünürlük (hedef FPS'in altına düşünce çözünürlüğü kıs, toparlanınca yükselt)
-    fpsT += rdt; fpsN++;
+    fpsT += rdt; fpsN++; if (graceT > 0) graceT -= rdt;
     if (fpsT >= 1) {
       const fps = fpsN / fpsT; fpsT = 0; fpsN = 0; const target = ST.gFps || 60;
-      if (ST.gDyn) {
+      if (graceT > 0) { lowT = 0; upT = 0; }
+      else if (ST.gDyn) {
         if (fps < target * 0.88) { upT = 0; lowT++; if (lowT >= 2 && pr > minPr + 0.01) { pr = Math.max(minPr, pr - 0.1); resize(); lowT = 0; } }
         else { lowT = 0; if (fps > target * 0.96 && pr < maxPr - 0.01 && ++upT >= 5) { pr = Math.min(maxPr, pr + 0.05); resize(); upT = 0; } }
       }
-      autoTune(fps);
+      if (graceT <= 0) autoTune(fps);
       UI.fps(Math.round(fps) + ' FPS · ' + pr.toFixed(2) + 'x · ' + renderer.info.render.calls + ' çağrı');
     }
     UI.update(dt, veh.speed);

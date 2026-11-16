@@ -31,8 +31,10 @@ window.runAll = async function (opt) {
     t(c, 'Ayarlar paneli açılır', !!document.getElementById('panel'));
     t(c, 'Ayarlara girince ünlem kalkar', document.getElementById('mBang').classList.contains('hidden'));
     for (const s of PC.SCHEMA) { document.querySelector('#panel .tabs [data-id=' + s.id + ']').click(); await wait(30); const n = document.querySelectorAll('#panel .body .item').length; t(c, 'Ayar sekmesi "' + s.name + '" dolu', n >= s.items.filter((i) => i.k).length, n + ' öğe'); }
-    M.closePanel(); M.panel('garage'); await wait(100); t(c, 'Garaj paneli açılır, araç kartları var', document.querySelectorAll('#panel .card').length >= 5, document.querySelectorAll('#panel .card').length + ' kart');
-    t(c, 'Garajda kategoriler: Araçlar + Bilim kurgu', (() => { const x = [...document.querySelectorAll('#panel .tabs .btn')].map((b) => b.textContent); return x.some((s) => /^Araçlar/.test(s)) && x.some((s) => /^Bilim kurgu/.test(s)); })());
+    M.closePanel(); M.panel('garage'); await wait(100); t(c, 'Garaj paneli açılır, araç kartları var', document.querySelectorAll('#panel .card').length >= 4, document.querySelectorAll('#panel .card').length + ' kart');
+    t(c, 'Garajda birincil kategori Araçlar, sonra diğerleri', (() => { const x = [...document.querySelectorAll('#panel .tabs .btn')].map((b) => b.textContent); return /^Araçlar/.test(x[0]) && x.length >= 3 && x.some((s) => /^Bilim kurgu/.test(s)); })(), [...document.querySelectorAll('#panel .tabs .btn')].map((b) => b.textContent).join(' | '));
+    t(c, 'Garajda "Aracı kullan" düğmesi var', !!document.querySelector('#panel .info .btn.pri'));
+    t(c, 'Varsayılan trafik 3, park edilmiş 10', PC.DEFAULTS.traffic === 3 && PC.DEFAULTS.parked === 10);
     M.closePanel(); M.panel('about'); await wait(60); t(c, 'Hakkında paneli açılır', !!document.getElementById('panel')); M.closePanel();
     t(c, 'Güncelleme denetimi hata fırlatmaz', await (async () => { try { await M.checkUpdate(true); return true; } catch (e) { return false; } })()); await wait(500); dlgClear();
     // oyuna başla
@@ -72,6 +74,8 @@ window.runAll = async function (opt) {
     t(c, 'Tüm ayar öğeleri değiştirilip geri alınabiliyor (' + PC.SCHEMA.reduce((a, s) => a + s.items.filter((i) => i.k).length, 0) + ' adet)', bad.length === 0, bad.slice(0, 5).join(' | '));
     for (const p of ['low', 'med', 'high', 'ultra']) { M.set('preset', p); const ok = Object.keys(PC.PRESETS[p]).every((k) => ST[k] === PC.PRESETS[p][k]); t(c, 'Ön ayar "' + p + '" tüm grafik anahtarlarını uygular', ok); await wait(150); }
     M.set('preset', 'med'); M.set('gShadow', 3); t(c, 'Elle değişiklik ön ayarı "Özel" yapar', ST.preset === 'custom'); M.set('preset', 'med');
+    for (const sec of PC.SCHEMA) { const k = sec.items.find((i) => i.k && i.k !== 'preset' && i.t !== 'seg'); if (!k) continue; const d0 = ST[k.k]; M.set(k.k, k.t === 'tog' ? (d0 ? 0 : 1) : k.max); M.resetTab(sec.id); t(c, 'Sekme sıfırlama: ' + sec.name + ' (' + k.k + ')', String(ST[k.k]) === String(PC.DEFAULTS[k.k]), ST[k.k]); }
+    t(c, 'Her ayar sekmesinde sıfırla düğmesi var', (() => { let ok = true; for (const sec of PC.SCHEMA) { M.panel('settings'); document.querySelector('#panel .tabs [data-id=' + sec.id + ']').click(); if (![...document.querySelectorAll('#panel .body .btn.red')].some((b) => /sıfırla/i.test(b.textContent))) ok = false; M.closePanel(); } return ok; })());
     M.set('drive', 'sim'); t(c, 'Zorluk "Simülasyon" yardımları kapatır', ST.esc === 0 && ST.tcs === 0 && ST.assist === 0); M.set('drive', 'arcade'); t(c, 'Zorluk "Arcade" tutuşu artırır', ST.grip > 1.05); M.set('drive', 'real');
     t(c, 'Ayarlar localStorage\'a yazılır', (() => { try { return JSON.parse(localStorage.getItem('pacifica-coast')).preset === ST.preset; } catch (e) { return false; } })());
     M.set('units', 'mph'); await wait(200); t(c, 'mph birimi HUD\'a yansır', /mph/.test(document.getElementById('spd').textContent)); M.set('units', 'kmh');
@@ -103,7 +107,7 @@ window.runAll = async function (opt) {
     M.set('gAniso', 16); await wait(200); t(c, 'Doku filtreleme uygulanır', true); M.set('gAniso', 4);
     t(c, 'Post-işleme etkin', PC.Post.ok && PC.Post.enabled);
     t(c, 'Çalışma sırasında GL hatası yok', gl.getError() === 0);
-    const info = G.renderer.info; await wait(800); t(c, 'Orta ayarda çizim çağrısı bütçesi ≤ 800', info.render.calls <= 800, info.render.calls + ' çağrı, ' + Math.round(info.render.triangles / 1000) + 'k üçgen');
+    G.renderPasses(); const info = G.renderer.info; t(c, 'Orta ayarda çizim çağrısı bütçesi ≤ 800', info.render.calls <= 800, info.render.calls + ' çağrı, ' + Math.round(info.render.triangles / 1000) + 'k üçgen');
   }
 
   // ================= 4) ARAÇLAR =================
@@ -134,6 +138,9 @@ window.runAll = async function (opt) {
       const sm = []; car.steerNode.traverse((o) => { if (o.isMesh) sm.push(o); }); const vv = new T.Vector3(); const samp = () => sm.map((m) => { m.updateWorldMatrix(true, false); const p = m.geometry.attributes.position; return vv.fromBufferAttribute(p, (p.count / 2) | 0).applyMatrix4(m.matrixWorld).clone(); });
       car.setSteer(0); car.group.updateMatrixWorld(true); const a = samp(); car.setSteer(1.5); car.group.updateMatrixWorld(true); const b = samp(); car.setSteer(0);
       const md = Math.max(0, ...a.map((p, i) => p.distanceTo(b[i]))); t(c, 'Direksiyon simidi dönüyor', sm.length > 0 && md > 0.02, sm.length + ' parça, kayma ' + md.toFixed(3));
+      { const inv2 = new T.Matrix4().copy(car.body.matrixWorld).invert(); const pts = []; sm.forEach((m) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i += Math.max(1, (p.count / 150) | 0)) pts.push([m, i]); }); const g2 = (o) => { o[0].updateWorldMatrix(true, false); return new T.Vector3().fromBufferAttribute(o[0].geometry.attributes.position, o[1]).applyMatrix4(o[0].matrixWorld).applyMatrix4(inv2); };
+        car.setSteer(0); car.group.updateMatrixWorld(true); const q0 = pts.map(g2); let tp = 0; q0.forEach((q, i) => { if (q.y > q0[tp].y) tp = i; }); car.setSteer(0.6); car.group.updateMatrixWorld(true); const q1 = g2(pts[tp]); car.setSteer(0);
+        t(c, 'Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa)', q1.z > q0[tp].z, q0[tp].z.toFixed(2) + ' → ' + q1.z.toFixed(2)); }
     } else t(c, 'Direksiyon (kokpit kiti) mevcut', !!(car.ck && car.ck.kit) || !!car.setSteer, car.ck && car.ck.kit ? 'kit' : '-');
     t(c, 'Cam malzemesi şeffaf ayarlı', !!car.glass && !!car.glass.transparent && car.glass.opacity < 0.7, car.glass && car.glass.opacity);
     // lambalar
@@ -195,7 +202,7 @@ window.runAll = async function (opt) {
     t(c, 'Patinajda lastik izi bırakır', a2.skid !== b.skid); t(c, 'Patinajda lastik dumanı çıkar', a2.smoke > 0);
     vv.slipR = vv.slipF = 0;
     // korna yarışı
-    const tc = TR.cars[0]; if (tc) { tc.x = vv.x + 8; tc.z = vv.z; for (let i = 0; i < 3; i++) fire('horn', true); fire('horn', false); t(c, '3 kez kornaya trafik aracı yarışa girer', tc.raceT > 0 || tc.honks >= 0, tc.raceT); } else t(c, 'Trafik aracı var', TR.cars.length > 0);
+    M.set('traffic', 5); for (let k = 0; k < 20 && !TR.cars.length; k++) await wait(500); const tc = TR.cars[0]; if (tc) { tc.x = vv.x + 8; tc.z = vv.z; for (let i = 0; i < 3; i++) fire('horn', true); fire('horn', false); t(c, '3 kez kornaya trafik aracı yarışa girer', tc.raceT > 0 || tc.honks >= 0, tc.raceT); } else t(c, 'Trafik aracı var', TR.cars.length > 0);
     // su
     vv.reset(-1200, -0.9, 400, 0); vv.inWater = true; t(c, 'Su durumu bayrağı okunabilir', typeof vv.inWater === 'boolean');
     UI.on.reset(); t(c, 'Yola koy sonrası araç sonlu konumda', fin(veh()));
