@@ -31,7 +31,7 @@
     D('veloster', 'Hyundai Veloster Turbo 2019', 'Hatchback · FWD · 1.6 T · 201 hp', { cat: 'Araçlar', colors: [null, 0xc41e1e, 0x1e3f8a, 0x1a1c20, 0xd96a00], mass: 1330, drive: 'fwd', awdFront: 1, cg: 0.4, cgH: 0.5, torque: [[1000, 180], [1500, 265], [4500, 265], [6000, 240], [6700, 200]], idle: 750, redline: 6700, stall: 2300, powerKw: 150, gears: [3.62, 1.96, 1.37, 1.04, 0.84, 0.7], rev: 3.4, final: 4.2, shiftT: 0.14, mu: 1.1, tireB: 11, brakeG: 1.12, cdA: 0.7, cl: 0.1, suspHz: 1.9, rollGain: 0.0055, pitchGain: 0.003, tank: 50, cyl: 4, vmaxDial: 260, dash: 'sport' },
       { interior: true, rig: true }),
     D('elroq', 'Škoda Elroq 2025', 'Elektrikli SUV · RWD · 286 hp', { cat: 'Araçlar', colors: [null, 0x15181c, 0xdfe2e6, 0x1b3a6b, 0x8a0f1a], mass: 2100, drive: 'rwd', awdFront: 0, cg: 0.5, cgH: 0.5, torque: [[300, 545], [4500, 545], [7000, 360], [10000, 250], [13500, 170]], idle: 300, redline: 13500, stall: 1200, powerKw: 210, gears: [1.0], rev: 1.0, final: 9.6, shiftT: 0.05, mu: 1.08, tireB: 10.5, brakeG: 1.1, cdA: 0.72, cl: 0.05, suspHz: 1.6, rollGain: 0.0065, pitchGain: 0.0035, tank: 77, cyl: 6, vmaxDial: 240, dash: 'modern' },
-      { interior: true, real: true, flip: true, animT: 11.6, swTilt: 0.42, steerNear: [0.4, 1.0, -0.37, 0.3], noCluster: true, keepHud: true, eyeDX: 0.02, eyeDY: 0, tireNode: /^NEW_TIRE/, steerNode: /^NEW_(Steering_wheel00[67]_|SW_LODGE|GN_Instance_128)/ }),
+      { interior: true, real: true, flip: true, animT: 11.6, swTilt: 0.42, steerRim: /^NEW_SW_LODGE_/, steerRimMat: /^leather_perforated_black/, noCluster: true, keepHud: true, eyeDX: 0.02, eyeDY: 0, tireNode: /^NEW_TIRE/,  }),
   ];
   PC.ExtCars = EXT;
   EXT.forEach((s, i) => PC.CarSpecs.splice(1 + i, 0, s));
@@ -260,8 +260,53 @@
         for (const m of car.mSigs || []) m.emissiveIntensity = 0; // sinyaller yalnız soldaki / sağdaki parlamalarla (malzeme iki yanda ortak)
         if (car.spr) car.spr(head, brake, il, ir, rev);
       };
+      if (E.steerRim) { // simit: halka ağından düzlem (PCA) bulunur, o düzlemdeki ince bir diskin içindeki tüm üçgenler (halka, göbek, logo, tuşlar) tek bir eksende döner; sinyal kolları ve sütun dışarıda kalır
+        car.group.updateMatrixWorld(true);
+        const rim = meshes.filter((o) => !o.userData.wheel && under(o, E.steerRim) && (!E.steerRimMat || E.steerRimMat.test(o.material.name || ''))), P = [], v = new T.Vector3();
+        for (const m of rim) { m.updateWorldMatrix(true, false); const p = m.geometry.attributes.position, ix = m.geometry.index, cnt = ix ? ix.count : p.count, st = Math.max(1, (cnt / 400) | 0); for (let i = 0; i < cnt; i += st) P.push(v.fromBufferAttribute(p, ix ? ix.getX(i) : i).applyMatrix4(m.matrixWorld).clone()); }
+        if (P.length > 20) {
+          const C = new T.Vector3(); for (const q of P) C.add(q); C.multiplyScalar(1 / P.length);
+          let xx = 0, xy = 0, xz = 0, yy = 0, yz = 0, zz = 0; for (const q of P) { const dx = q.x - C.x, dy = q.y - C.y, dz = q.z - C.z; xx += dx * dx; xy += dx * dy; xz += dx * dz; yy += dy * dy; yz += dy * dz; zz += dz * dz; }
+          const mul = (u) => new T.Vector3(xx * u.x + xy * u.y + xz * u.z, xy * u.x + yy * u.y + yz * u.z, xz * u.x + yz * u.y + zz * u.z);
+          let v1 = new T.Vector3(1, 0.3, 0.2).normalize(); for (let i = 0; i < 40; i++) v1 = mul(v1).normalize();
+          let v2 = new T.Vector3(0.2, 1, 0.4); v2.addScaledVector(v1, -v2.dot(v1)).normalize(); for (let i = 0; i < 40; i++) { v2 = mul(v2); v2.addScaledVector(v1, -v2.dot(v1)).normalize(); }
+          const nrm = new T.Vector3().crossVectors(v1, v2).normalize(); if (nrm.x < 0) nrm.negate();
+          let R = 0, a0 = 1e9, a1 = -1e9; for (const q of P) { const d = q.clone().sub(C), a = d.dot(nrm); d.addScaledVector(nrm, -a); R = Math.max(R, d.length()); a0 = Math.min(a0, a); a1 = Math.max(a1, a); }
+          const lo = a0 - (E.steerBack !== undefined ? E.steerBack : 0.09), hi = a1 + 0.012, ta = new T.Vector3(), tb = new T.Vector3(), tc = new T.Vector3(), parts = [];
+          for (const m of meshes.slice()) {
+            if (!m.visible || m.userData.wheel) continue; box(m, _b); if (_b.distanceToPoint(C) > R + 0.12) continue;
+            const g = m.geometry, p = g.attributes.position, ix = g.index ? g.index.array : null, nt = (ix ? ix.length : p.count) / 3, inn = [], out = []; m.updateWorldMatrix(true, false);
+            for (let t = 0; t < nt; t++) {
+              const i0 = ix ? ix[t * 3] : t * 3, i1 = ix ? ix[t * 3 + 1] : t * 3 + 1, i2 = ix ? ix[t * 3 + 2] : t * 3 + 2;
+              ta.fromBufferAttribute(p, i0); tb.fromBufferAttribute(p, i1); tc.fromBufferAttribute(p, i2); ta.add(tb).add(tc).multiplyScalar(1 / 3).applyMatrix4(m.matrixWorld); ta.sub(C); const a = ta.dot(nrm); ta.addScaledVector(nrm, -a);
+              (a > lo && a < hi && ta.length() < R * 1.04 ? inn : out).push(i0, i1, i2);
+            }
+            if (inn.length < 3) continue;
+            if (!out.length) { parts.push(m); continue; }
+            const mk2 = (list) => { const g2 = new T.BufferGeometry(); for (const an in g.attributes) g2.setAttribute(an, g.attributes[an]); g2.setIndex(list); const bx = new T.Box3(), vv = new T.Vector3(); for (let i = 0; i < list.length; i += 2) bx.expandByPoint(vv.fromBufferAttribute(p, list[i])); g2.boundingBox = bx; g2.boundingSphere = bx.getBoundingSphere(new T.Sphere()); return g2; };
+            const m2 = new T.Mesh(mk2(inn), m.material); m2.frustumCulled = false; m2.castShadow = true; m.parent.add(m2); m2.position.copy(m.position); m2.quaternion.copy(m.quaternion); m2.scale.copy(m.scale); m2.updateMatrixWorld(true);
+            m.geometry = mk2(out); meshes.push(m2); parts.push(m2); car.diag.swSplit = (car.diag.swSplit || 0) + 1;
+          }
+          const piv = new T.Group(); piv.name = 'SW_Empty_auto'; piv.position.copy(C); piv.quaternion.setFromUnitVectors(new T.Vector3(1, 0, 0), nrm); piv.userData.dyn = true; car.body.add(piv); piv.updateMatrixWorld(true);
+          for (const o of parts) piv.attach(o); car.diag.swTilt = +Math.asin(U.clamp(-nrm.y, -1, 1)).toFixed(2); car.diag.swR = +R.toFixed(2); car.diag.swN = nrm.toArray().map((x) => +x.toFixed(2)); car.diag.swC = C.toArray().map((x) => +x.toFixed(2)); car.diag.swE = [mul(v1).dot(v1), mul(v2).dot(v2), xx + yy + zz].map((x) => +x.toFixed(2)); car.diag.swAx = [a0, a1, lo, hi].map((x) => +x.toFixed(3));
+        }
+      }
       if (E.steerNode) {
-        const parts = meshes.filter((o) => { if (o.userData.wheel || !under(o, E.steerNode)) return false; if (!E.steerNear) return true; box(o, _b).getCenter(_c); return _c.distanceTo(new T.Vector3(E.steerNear[0], E.steerNear[1], E.steerNear[2])) < E.steerNear[3]; });
+        const sc0 = E.steerNear ? new T.Vector3(E.steerNear[0], E.steerNear[1], E.steerNear[2]) : null, cand = meshes.filter((o) => !o.userData.wheel && under(o, E.steerNode));
+        const parts = cand.filter((o) => { if (!sc0) return true; box(o, _b).getCenter(_c); _b.getSize(_s); return _c.distanceTo(sc0) < E.steerNear[3] && Math.max(_s.x, _s.y, _s.z) < 0.6; });
+        if (sc0) { // büyük birleşik ağların (ör. göbek + gösterge paneli) içinden yalnız simidin çevresindeki üçgenleri ayır
+          const a = new T.Vector3(), b2 = new T.Vector3(), c2 = new T.Vector3(), rr = E.steerNear[3] * 0.75;
+          const extra = E.steerAll ? meshes.filter((o) => o.visible && !o.userData.wheel && cand.indexOf(o) < 0 && (box(o, _b), _b.distanceToPoint(sc0) < rr)) : [];
+          for (const m of cand.concat(extra)) {
+            if (parts.indexOf(m) >= 0) continue; const g = m.geometry, p = g.attributes.position, ix = g.index ? g.index.array : null, nt = (ix ? ix.length : p.count) / 3, inn = [], out = [];
+            m.updateWorldMatrix(true, false);
+            for (let t = 0; t < nt; t++) { const i0 = ix ? ix[t * 3] : t * 3, i1 = ix ? ix[t * 3 + 1] : t * 3 + 1, i2 = ix ? ix[t * 3 + 2] : t * 3 + 2; a.fromBufferAttribute(p, i0); b2.fromBufferAttribute(p, i1); c2.fromBufferAttribute(p, i2); a.add(b2).add(c2).multiplyScalar(1 / 3).applyMatrix4(m.matrixWorld); (a.distanceTo(sc0) < rr ? inn : out).push(i0, i1, i2); }
+            if (inn.length < 9) continue;
+            const mk2 = (list) => { const g2 = new T.BufferGeometry(); for (const an in g.attributes) g2.setAttribute(an, g.attributes[an]); g2.setIndex(list); const bx = new T.Box3(), vv = new T.Vector3(); for (let i = 0; i < list.length; i += 2) bx.expandByPoint(vv.fromBufferAttribute(p, list[i])); g2.boundingBox = bx; g2.boundingSphere = bx.getBoundingSphere(new T.Sphere()); return g2; };
+            const m2 = new T.Mesh(mk2(inn), m.material); m2.frustumCulled = false; m2.castShadow = true; m.parent.add(m2); m2.position.copy(m.position); m2.quaternion.copy(m.quaternion); m2.scale.copy(m.scale); m2.updateMatrixWorld(true);
+            m.geometry = mk2(out); meshes.push(m2); parts.push(m2); car.diag.swSplit = (car.diag.swSplit || 0) + 1;
+          }
+        }
         if (parts.length) {
           car.group.updateMatrixWorld(true); const bbA = new T.Box3(), pts = [], v = new T.Vector3();
           for (const o of parts) { bbA.union(box(o, _b)); const p = o.geometry.attributes.position, st = Math.max(1, (p.count / 150) | 0); for (let i = 0; i < p.count; i += st) pts.push(v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld).clone()); }

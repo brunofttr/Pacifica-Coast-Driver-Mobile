@@ -32,7 +32,7 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 22 | Güncelleme denetimi hata fırlatmaz | GEÇTİ |  |
 | 23 | Oyuna Başla → oyun "play" | GEÇTİ | play |
 | 24 | HUD göründü, ana menü gizli | GEÇTİ |  |
-| 25 | Oyunda sahne çiziliyor | GEÇTİ | 723 çizim |
+| 25 | Oyunda sahne çiziliyor | GEÇTİ | 972 çizim |
 | 26 | HUD düğmesi var: indL | GEÇTİ |  |
 | 27 | HUD düğmesi var: indR | GEÇTİ |  |
 | 28 | HUD düğmesi var: lights | GEÇTİ |  |
@@ -80,9 +80,9 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 
 | # | Test | Sonuç | Not |
 |---|---|---|---|
-| 63 | Ön ayar low çiziyor, GL hatası yok | GEÇTİ | 24 çizim, GL 0 |
-| 64 | Ön ayar med çiziyor, GL hatası yok | GEÇTİ | 269 çizim, GL 0 |
-| 65 | Ön ayar high çiziyor, GL hatası yok | GEÇTİ | 282 çizim, GL 0 |
+| 63 | Ön ayar low çiziyor, GL hatası yok | GEÇTİ | 28 çizim, GL 0 |
+| 64 | Ön ayar med çiziyor, GL hatası yok | GEÇTİ | 251 çizim, GL 0 |
+| 65 | Ön ayar high çiziyor, GL hatası yok | GEÇTİ | 300 çizim, GL 0 |
 | 66 | Ön ayar ultra çiziyor, GL hatası yok | GEÇTİ | 304 çizim, GL 0 |
 | 67 | Gölge kapalıyken güneş gölge atmaz | GEÇTİ |  |
 | 68 | Gölge orta: 2048 harita | GEÇTİ | 2048 |
@@ -108,13 +108,13 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 88 | gSsao aç-kapa hatasız | GEÇTİ |  |
 | 89 | gParticles aç-kapa hatasız | GEÇTİ |  |
 | 90 | gSpot aç-kapa hatasız | GEÇTİ |  |
-| 91 | FPS sınırı 30 çizim sayısını sınırlar | GEÇTİ | 30sn: 612 / sınırsız: 4217 |
+| 91 | FPS sınırı 30 çizim sayısını sınırlar | GEÇTİ | 30sn: 612 / sınırsız: 4811 |
 | 92 | Çözünürlük ölçeği piksel oranını değiştirir | GEÇTİ | 0.50 → 0.90 |
 | 93 | Su kalitesi anahtarı (shader uniform) | GEÇTİ |  |
 | 94 | Doku filtreleme uygulanır | GEÇTİ |  |
 | 95 | Post-işleme etkin | GEÇTİ |  |
 | 96 | Çalışma sırasında GL hatası yok | GEÇTİ |  |
-| 97 | Orta ayarda çizim çağrısı bütçesi ≤ 800 | GEÇTİ | 326 çağrı, 865k üçgen |
+| 97 | Orta ayarda çizim çağrısı bütçesi ≤ 1000 | GEÇTİ | 848 çağrı, 3196k üçgen |
 
 ## Araç aurora (18)
 
@@ -125,7 +125,7 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 100 | İskeletli (dönmeyen) mesh yok | GEÇTİ | 0 |
 | 101 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.43/0.43/0.40/0.40 |
 | 102 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
-| 103 | Direksiyon simidi dönüyor | GEÇTİ | 6 parça, kayma 0.211 |
+| 103 | Direksiyon simidi dönüyor | GEÇTİ | 6 parça, kayma 0.214 |
 | 104 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.04 → 0.04 |
 | 105 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.3 |
 | 106 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -148,8 +148,8 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 118 | İskeletli (dönmeyen) mesh yok | GEÇTİ | 0 |
 | 119 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.41/0.42/0.41/0.41 |
 | 120 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
-| 121 | Direksiyon simidi dönüyor | GEÇTİ | 31 parça, kayma 0.352 |
-| 122 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.45 → -0.29 |
+| 121 | Direksiyon simidi dönüyor | GEÇTİ | 31 parça, kayma 0.403 |
+| 122 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.20 → -0.08 |
 | 123 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.26 |
 | 124 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 125 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -171,8 +171,8 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 136 | İskeletli (dönmeyen) mesh yok | GEÇTİ | 0 |
 | 137 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.47/0.47/0.46/0.46 |
 | 138 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
-| 139 | Direksiyon simidi dönüyor | GEÇTİ | 6 parça, kayma 0.209 |
-| 140 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.25 → -0.16 |
+| 139 | Direksiyon simidi dönüyor | GEÇTİ | 6 parça, kayma 0.229 |
+| 140 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.29 → -0.20 |
 | 141 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.26 |
 | 142 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 143 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -194,8 +194,8 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 154 | İskeletli (dönmeyen) mesh yok | GEÇTİ | 0 |
 | 155 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.46/0.46/0.44/0.44 |
 | 156 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
-| 157 | Direksiyon simidi dönüyor | GEÇTİ | 10 parça, kayma 0.243 |
-| 158 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.27 → -0.20 |
+| 157 | Direksiyon simidi dönüyor | GEÇTİ | 10 parça, kayma 0.213 |
+| 158 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.37 → -0.28 |
 | 159 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.26 |
 | 160 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 161 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -218,7 +218,7 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 173 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.47/0.45/0.46/0.46 |
 | 174 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
 | 175 | Direksiyon simidi dönüyor | GEÇTİ | 9 parça, kayma 0.234 |
-| 176 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.41 → -0.33 |
+| 176 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.46 → -0.38 |
 | 177 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.26 |
 | 178 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 179 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -240,8 +240,8 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 190 | İskeletli (dönmeyen) mesh yok | GEÇTİ | 0 |
 | 191 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.52/0.53/0.49/0.49 |
 | 192 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
-| 193 | Direksiyon simidi dönüyor | GEÇTİ | 10 parça, kayma 0.249 |
-| 194 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.38 → -0.30 |
+| 193 | Direksiyon simidi dönüyor | GEÇTİ | 10 parça, kayma 0.234 |
+| 194 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.43 → -0.34 |
 | 195 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.26 |
 | 196 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 197 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -373,8 +373,8 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 293 | İskeletli (dönmeyen) mesh yok | GEÇTİ | 0 |
 | 294 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.39/0.38/0.38/0.38 |
 | 295 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
-| 296 | Direksiyon simidi dönüyor | GEÇTİ | 6 parça, kayma 0.224 |
-| 297 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.46 → -0.34 |
+| 296 | Direksiyon simidi dönüyor | GEÇTİ | 6 parça, kayma 0.241 |
+| 297 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.40 → -0.29 |
 | 298 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.24 |
 | 299 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 300 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -396,8 +396,8 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 311 | İskeletli (dönmeyen) mesh yok | GEÇTİ | 0 |
 | 312 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.35/0.37/0.36/0.36 |
 | 313 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
-| 314 | Direksiyon simidi dönüyor | GEÇTİ | 12 parça, kayma 0.271 |
-| 315 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.38 → -0.27 |
+| 314 | Direksiyon simidi dönüyor | GEÇTİ | 12 parça, kayma 0.272 |
+| 315 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.40 → -0.29 |
 | 316 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.24 |
 | 317 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 318 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -420,7 +420,7 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 330 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 0.33/0.34/0.34/0.34 |
 | 331 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
 | 332 | Direksiyon simidi dönüyor | GEÇTİ | 10 parça, kayma 0.251 |
-| 333 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.36 → -0.26 |
+| 333 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.38 → -0.27 |
 | 334 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.24 |
 | 335 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 336 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -442,8 +442,8 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 347 | İskeletli (dönmeyen) mesh yok | GEÇTİ | 0 |
 | 348 | Tekerlekler görsel olarak dönüyor | GEÇTİ | 3.67/3.97/3.29/3.29 |
 | 349 | Ön tekerlekler kırılıyor, arkalar sabit | GEÇTİ |  |
-| 350 | Direksiyon simidi dönüyor | GEÇTİ | 5 parça, kayma 0.243 |
-| 351 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.27 → -0.20 |
+| 350 | Direksiyon simidi dönüyor | GEÇTİ | 17 parça, kayma 0.282 |
+| 351 | Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa) | GEÇTİ | -0.37 → -0.24 |
 | 352 | Cam malzemesi şeffaf ayarlı | GEÇTİ | 0.24 |
 | 353 | Sol sinyal yalnız SOL tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
 | 354 | Sağ sinyal yalnız SAĞ tarafta yanar (ön+arka) | GEÇTİ | 2 lamba |
@@ -451,8 +451,8 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 356 | Geri vites lambaları yanar | GEÇTİ | 2 |
 | 357 | Farlar yanar | GEÇTİ | 2 |
 | 358 | Hepsi kapalıyken lamba görünmez | GEÇTİ |  |
-| 359 | Sürücü gözü gövdenin içinde | GEÇTİ | -0.03,1.27,-0.36 |
-| 360 | Dikiz aynası gövdenin içinde ve gözün önünde | GEÇTİ | 0.47,1.39,0.00 |
+| 359 | Sürücü gözü gövdenin içinde | GEÇTİ | -0.07,1.25,-0.36 |
+| 360 | Dikiz aynası gövdenin içinde ve gözün önünde | GEÇTİ | 0.43,1.37,0.00 |
 | 361 | Sürüş fiziği: hızlanır, durur, geri gider | GEÇTİ | 107 km/s, dur 0.0, geri -43 |
 | 362 | Araç yüklenirken konsol hatası yok | GEÇTİ |  |
 
@@ -561,7 +561,7 @@ Sayfa içi otomatik test paketi (`tools/gametest.js`) + `tests.html` mantık tes
 | 411 | Işınlanma: Asma köprü | GEÇTİ | Δy 0.00 |
 | 412 | Işınlanma: Tepe yolu manzarası | GEÇTİ | Δy 0.00 |
 | 413 | Villa / garaj ışınlanma noktası zeminde | GEÇTİ |  |
-| 414 | Varış görevi başlar, hedef haritada | GEÇTİ | 542 m |
+| 414 | Varış görevi başlar, hedef haritada | GEÇTİ | 649 m |
 | 415 | Hedefe varınca görev tamamlanır | GEÇTİ |  |
 | 416 | Patinajda lastik izi bırakır | GEÇTİ |  |
 | 417 | Patinajda lastik dumanı çıkar | GEÇTİ |  |

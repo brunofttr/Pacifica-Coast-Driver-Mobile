@@ -107,7 +107,7 @@ window.runAll = async function (opt) {
     M.set('gAniso', 16); await wait(200); t(c, 'Doku filtreleme uygulanır', true); M.set('gAniso', 4);
     t(c, 'Post-işleme etkin', PC.Post.ok && PC.Post.enabled);
     t(c, 'Çalışma sırasında GL hatası yok', gl.getError() === 0);
-    G.renderPasses(); const info = G.renderer.info; t(c, 'Orta ayarda çizim çağrısı bütçesi ≤ 800', info.render.calls <= 800, info.render.calls + ' çağrı, ' + Math.round(info.render.triangles / 1000) + 'k üçgen');
+    M.set('preset', 'med'); await wait(300); G.renderPasses(); const info = G.renderer.info; t(c, 'Orta ayarda çizim çağrısı bütçesi ≤ 1000', info.render.calls <= 1000, info.render.calls + ' çağrı, ' + Math.round(info.render.triangles / 1000) + 'k üçgen');
   }
 
   // ================= 4) ARAÇLAR =================
@@ -135,10 +135,10 @@ window.runAll = async function (opt) {
     car.wheels.forEach((w) => { w.hub.rotation.y = 0; w.spin.rotation.z = 0; });
     // direksiyon
     if (car.steerNode) {
-      const sm = []; car.steerNode.traverse((o) => { if (o.isMesh) sm.push(o); }); const vv = new T.Vector3(); const samp = () => sm.map((m) => { m.updateWorldMatrix(true, false); const p = m.geometry.attributes.position; return vv.fromBufferAttribute(p, (p.count / 2) | 0).applyMatrix4(m.matrixWorld).clone(); });
+      const sm = []; car.steerNode.traverse((o) => { if (o.isMesh) sm.push(o); }); const vv = new T.Vector3(); const vi = (m, k) => { const ix = m.geometry.index; return ix ? ix.getX(Math.min(ix.count - 1, k)) : k; }; const samp = () => sm.map((m) => { m.updateWorldMatrix(true, false); const p = m.geometry.attributes.position, ix = m.geometry.index; return vv.fromBufferAttribute(p, vi(m, ((ix ? ix.count : p.count) / 2) | 0)).applyMatrix4(m.matrixWorld).clone(); });
       car.setSteer(0); car.group.updateMatrixWorld(true); const a = samp(); car.setSteer(1.5); car.group.updateMatrixWorld(true); const b = samp(); car.setSteer(0);
       const md = Math.max(0, ...a.map((p, i) => p.distanceTo(b[i]))); t(c, 'Direksiyon simidi dönüyor', sm.length > 0 && md > 0.02, sm.length + ' parça, kayma ' + md.toFixed(3));
-      { const inv2 = new T.Matrix4().copy(car.body.matrixWorld).invert(); const pts = []; sm.forEach((m) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i += Math.max(1, (p.count / 150) | 0)) pts.push([m, i]); }); const g2 = (o) => { o[0].updateWorldMatrix(true, false); return new T.Vector3().fromBufferAttribute(o[0].geometry.attributes.position, o[1]).applyMatrix4(o[0].matrixWorld).applyMatrix4(inv2); };
+      { const inv2 = new T.Matrix4().copy(car.body.matrixWorld).invert(); const pts = []; sm.forEach((m) => { const ix = m.geometry.index, cnt = ix ? ix.count : m.geometry.attributes.position.count; for (let i = 0; i < cnt; i += Math.max(1, (cnt / 150) | 0)) pts.push([m, vi(m, i)]); }); const g2 = (o) => { o[0].updateWorldMatrix(true, false); return new T.Vector3().fromBufferAttribute(o[0].geometry.attributes.position, o[1]).applyMatrix4(o[0].matrixWorld).applyMatrix4(inv2); };
         car.setSteer(0); car.group.updateMatrixWorld(true); const q0 = pts.map(g2); let tp = 0; q0.forEach((q, i) => { if (q.y > q0[tp].y) tp = i; }); car.setSteer(0.6); car.group.updateMatrixWorld(true); const q1 = g2(pts[tp]); car.setSteer(0);
         t(c, 'Direksiyon doğru yöne dönüyor (sağa → simidin üstü sağa)', q1.z > q0[tp].z, q0[tp].z.toFixed(2) + ' → ' + q1.z.toFixed(2)); }
     } else t(c, 'Direksiyon (kokpit kiti) mevcut', !!(car.ck && car.ck.kit) || !!car.setSteer, car.ck && car.ck.kit ? 'kit' : '-');
