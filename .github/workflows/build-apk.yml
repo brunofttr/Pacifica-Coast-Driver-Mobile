@@ -25,10 +25,10 @@ jobs:
           A=apk; O=$A/out; D=dist
           rm -rf $O $A/assets $A/assets-lite; mkdir -p $O/classes $A/assets $A/assets-lite
           sed 's/window.PC_DIST = 1;/window.PC_DIST = 1; window.PC_PACK_DIR = ""; window.PC_VIDEO_DIR = "";/' $D/pacifica-coast.html > $A/assets/pacifica-coast.html
-          sed -E 's/window\.PC_CARS = \[[^]]*\];/window.PC_CARS = ["c037","c011","veloster"];/' $A/assets/pacifica-coast.html > $A/assets-lite/pacifica-coast.html
           cp $D/data/*.js $A/assets/ ; cp $D/video/*.mp4 $A/assets/ 2>/dev/null || true
           cp $D/video/*.mp4 $A/assets-lite/ 2>/dev/null || true
-          for id in c037 c011 veloster; do cp $D/data/$id.js $A/assets-lite/; done
+          L=""; for id in c037 c011 veloster; do [ -f $D/data/$id.js ] && cp $D/data/$id.js $A/assets-lite/ && L="$L,\"$id\""; done
+          sed -E "s/window\.PC_CARS = \[[^]]*\];/window.PC_CARS = [${L#,}];/" $A/assets/pacifica-coast.html > $A/assets-lite/pacifica-coast.html
           javac --release 11 -nowarn -cp "$JAR" -d $O/classes $A/src/com/pacifica/coast/MainActivity.java
           "$BT/d8" --lib "$JAR" --min-api 28 --output $O $O/classes/com/pacifica/coast/*.class
           "$BT/aapt2" compile --dir $A/res -o $O/res.zip
